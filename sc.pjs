@@ -14,7 +14,7 @@ boolean doDraw = true;
 HashMap dateCache = new HashMap();
 
 
-SemesterCalendar sc = new SemesterCalendar(translateDates(dates));
+SemesterCalendar sc = new SemesterCalendar(translateDates(semesterDates));
 
 int dayHeight = (height - (topMargin + outerGap))/7;
 int dayWidth = 
