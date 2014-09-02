@@ -1,0 +1,400 @@
+int backgroundColor = 255;
+int foregroundColor = 0;
+int height = document.getElementById('sc-canvas').getAttribute('height');
+int width = document.getElementById('sc-canvas').getAttribute('width');
+int outerGap = 3;
+int topMargin = 15;
+int leftMargin = 15;
+boolean doDraw = true;
+
+	
+// Semester dates are (should be) singletons.  Use a hash map to make sure
+// that's true.  The key for date mm, dd is 100*mm + dd
+
+HashMap dateCache = new HashMap();
+
+
+SemesterCalendar sc = new SemesterCalendar(translateDates(dates));
+
+int dayHeight = (height - (topMargin + outerGap))/7;
+int dayWidth = 
+  (width - (leftMargin + outerGap))/(sc.weekInSemester(sc.lastDay()) + 1);
+
+
+void
+draw() {
+
+  if (doDraw) {
+    background(backgroundColor);
+    drawGrid();
+    labelGrid();
+    }
+  else {
+    SemesterDate sd = translateDate([9, 2, 'color', [255, 0, 0]]);
+    println(sd.date.toString());
+    println(sd.getAttr('color'));
+    }
+  }
+
+
+void
+drawGrid() {
+
+  int x, y;
+  SemesterDate d, lastDay;
+
+  stroke(foregroundColor);
+
+  lastDay = sc.lastDay();
+  for (d = sc.firstDay(); !lastDay.before(d); d = d.tomorrow())
+    sc.draw(d);
+  }
+
+
+void 
+labelGrid() {
+
+  SemesterDate d;
+
+  textAlign(CENTER);
+  textSize((int) (dayHeight*0.3));
+  textMode(SCREEN);
+  fill(foregroundColor);
+
+  for (i = 0; i < 7; ++i)
+    text("SMTWTFS"[i], leftMargin*0.3, topMargin + dayHeight*(i + 0.6));
+
+  // This code doesn't work if the first day of the semester (on Thursday, for
+  // example) follows the last day of the semester (on Tuesday, for example)
+  // and the last day of the semester is in the first week of the last month: 
+  // the last month doesn't get labeled.
+
+  for (d = sc.firstDay(); !sc.lastDay().before(d); d = d.firstOfNextMonth())
+    printMonth(d); 
+  }
+
+
+void
+printMonth(SemesterDate d) {
+
+  int x = leftMargin + dayWidth*(d.weekInYear() - sc.firstDay().weekInYear());
+
+  String months = [ 
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December" ];
+
+  fill(foregroundColor);
+  textAlign(LEFT);
+  textSize((int) (dayHeight*0.4));
+
+  text(months[d.month()], x, topMargin*0.6);
+  }
+
+
+void
+setup() {
+
+  size(width, height);
+  background(backgroundColor);
+
+  noLoop();
+  }
+
+
+SemesterDate
+translateDate(Object date[]) {
+
+  // Return the semester date defined by the given date specification.
+  // A date specification has the form [ mm, dd, a-name, a-value, ...].
+  // There may be zero or more (attribute name, attribute value) pairs.
+  // Example: [ 9, 2, 'color', [ 255, 0, 0 ] ].
+
+  SemesterDate sd = newSemesterDate(date[0], date[1]);
+  int i;
+
+  for (i = 2; i < date.length; i += 2) {
+    String name = date[i];
+    if (name == 'color') {
+      int rgb[] = date[i + 1];
+      sd.putAttr(name, color(rgb[0], rgb[1], rgb[2]));
+      }
+    else
+      sd.putAttr(name, date[i + 1]);
+    }
+
+  return sd;
+  }
+
+
+SemesterDates []
+translateDates(Object dates[][]) {
+
+  // Translate a list of date specifications into semester dates.  The order of
+  // the dates returned is the same as the given order.
+
+  SemesterDates sd[] = [ ];
+  int i;
+
+  for (i = dates.length - 1; i >= 0; --i)
+    sd.unshift(translateDate(dates[i]));
+
+  return sd;
+  }
+
+
+class 
+SemesterCalendar {
+
+  void
+  draw(SemesterDate d) {
+
+    // Draw the given date on this calendar.
+
+    int x, y;
+
+    y = topMargin + dayHeight*d.dayInWeek();
+    x = leftMargin + dayWidth*weekInSemester(d);
+
+    color c = d.getAttr('color');
+    if (c !== null) {
+      fill(c);
+      noStroke();
+      rect(x, y, dayWidth, dayHeight);
+      stroke(foregroundColor);
+      }
+        
+    line(x, y, x + dayWidth, y);
+    line(x, y, x, y + dayHeight);
+
+    if ((6 == d.dayInWeek()) || d.sameDate(lDay))
+      line(x, y + dayHeight, x + dayWidth, y + dayHeight);
+    if (!d.nextWeek().before(lDay))
+      line(x + dayWidth, y, x + dayWidth, y + dayHeight);
+
+    fill(foregroundColor);
+    textAlign(LEFT);
+    textSize((int) (dayHeight*0.3));
+    textMode(SCREEN);
+
+    text(d.dayInMonth(), x + dayWidth*0.05, y + dayHeight*0.3);
+    }
+
+
+  SemesterDate 
+  firstDay() {
+
+    // Return the first (earliest) date in this calendar.
+
+    return fDay;
+    }
+
+
+  SemesterDate 
+  lastDay() {
+
+    // Return the last (latest) date in this calendar.
+
+    return lDay;
+    }
+
+
+  SemesterCalendar(SemesterDate schedule[]) {
+
+    // Create a new semester calendar starting and ending on the given days.
+
+    fDay = schedule[0];
+    lDay = schedule[schedule.length - 1];
+    }
+
+
+  int
+  weekInSemester(SemesterDate d) {
+
+    // Return the number of the week in this semester containing the given 
+    // date (Week 0 contains the first day).
+
+    return d.weekInYear() - fDay.weekInYear();
+    }
+
+
+  // The first and last days of the semester, inclusive on both ends.
+
+  SemesterDate fDay, lDay;
+  }
+
+
+
+void
+newSemesterDate(int m, int d) {
+
+  // Return the semester date with the given month (jan = 1) and date.
+
+  int h = 100*m + d;
+  SemesterDate sd;
+
+  if (dateCache.containsKey(h))
+    sd = dateCache.get(h);
+  else {
+    sd = new SemesterDate(m, d);
+    dateCache.put(h, sd);
+    }
+
+  return sd;
+  }
+
+
+class 
+SemesterDate {
+
+  boolean
+  before(SemesterDate d) {
+
+    // Return true iff this date is before the given date.
+
+    return date.diffDays(d.date) > 0;
+    }
+
+
+  SemesterDate
+  relativeDate(int deltaM, int deltaD) {
+
+    // Return the semester date that's offset (positive, forward in time;
+    // negative, backward in time) relative to this semester date.
+
+    XDate xd = date.clone();
+
+    xd.addMonths(deltaM).addDays(deltaD);
+
+    SemesterDate sd;
+
+    sd = newSemesterDate(xd.getMonth() + 1, xd.getDate());
+    sd.date.setFullYear(xd.getFullYear());
+
+    return sd;
+    }
+
+
+  int
+  dayInMonth() {
+
+    // Return the day of the month associated with this date..
+
+    return date.getDate();
+    }
+
+
+  int 
+  dayInWeek() {
+
+    // Return this day's position in the week (Sunday = 0).
+
+    return date.getDay();
+    }
+
+
+  SemesterDate
+  firstOfNextMonth() {
+
+    // Return the first day of the month after this date.
+
+    return relativeDate(1, 1 - dayInMonth());
+    }
+
+
+  Object
+  getAttr(String name) {
+
+    // Return the value associated with the given key.
+
+    return attributes.get(name);
+    }
+
+
+  int 
+  month() {
+
+    // Return the number of the month containing this date (month 0 contains 1
+    // January).
+
+    return date.getMonth();
+    }
+
+
+  SemesterDate
+  nextWeek() {
+
+    // Return the day seven days from today (tomorrow is one day from today).
+
+    return relativeDate(0, 7);
+    }
+
+
+  SemesterDate
+  putAttr(String name, Object value) {
+
+    // Add the given (name, value) pair as an attribute to this semester date.
+    // Return this semester date.
+
+    attributes.put(name, value);
+
+    return this;
+    }
+
+
+  boolean
+  sameDate(SemesterDate d) {
+
+    // Return true iff this date is the same as the given date.
+
+    return date.diffDays(d.date) == 0;
+    }
+
+
+  SemesterDate(int m, int d) {
+
+    // Create a new date with the given month (January = 1) and date (first
+    // date is 1).
+
+    // The assumption is semesters don't straddle years, so it doesn't make
+    // much difference what year it is.  (Ah, but there's leap years.)
+
+    date = new XDate(2014, m - 1, d);
+    attributes = new HashMap();
+    }
+
+
+  SemesterDate
+  tomorrow() {
+
+    // Return the day after this day.
+
+    return relativeDate(0, 1);
+    }
+
+
+  String
+  toString() {
+
+    // Return a string representation of this date.
+
+    return date.toString();
+    }
+
+
+  int
+  weekInYear() {
+   
+    // Return the number of the week containing this date (week 0 contains 1
+    // January).  
+
+    // The Sunday before Monday does not belong in the same week as Monday, and
+    // the Sunday after Saturday does, which is backward from what is needed.
+    // Bump Sunday up a week to fix.
+
+    return date.getWeek() + (date.getDay() == 0 ? 1 : 0);
+    }
+
+
+  XDate date;
+  HashMap attributes;
+  }
