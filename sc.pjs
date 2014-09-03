@@ -171,11 +171,16 @@ SemesterCalendar {
     if (!d.nextWeek().before(lDay))
       line(x + dayWidth, y, x + dayWidth, y + dayHeight);
 
+    if (d.getAttr('test')) {
+      int r = 2;
+      int gap = 1;
+      fill(foregroundColor);
+      ellipse(x + dayWidth - (r + gap), y + dayHeight - (r + gap), r, r);
+      }
+
     fill(foregroundColor);
     textAlign(LEFT);
     textSize((int) (dayHeight*0.3));
-    textMode(SCREEN);
-
     text(d.dayInMonth(), x + dayWidth*0.05, y + dayHeight*0.3);
     }
 
