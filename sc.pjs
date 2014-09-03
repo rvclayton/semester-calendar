@@ -101,6 +101,19 @@ setup() {
   }
 
 
+void
+swap(Object a[], int i, int j) {
+
+  // Swap a[i] and a[j].
+
+  if (i != j) {
+    Object t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+    }
+  }
+
+
 SemesterDate
 translateDate(Object date[]) {
 
@@ -126,13 +139,13 @@ translateDate(Object date[]) {
   }
 
 
-SemesterDates []
+SemesterDate []
 translateDates(Object dates[][]) {
 
-  // Translate a list of date specifications into semester dates.  The order of
-  // the dates returned is the same as the given order.
+  // Translate a list of date specifications into semester dates.  Dates are
+  // returned in the order given.
 
-  SemesterDates sd[] = [ ];
+  SemesterDate sd[] = [ ];
   int i;
 
   for (i = dates.length - 1; i >= 0; --i)
@@ -172,7 +185,7 @@ SemesterCalendar {
       line(x + dayWidth, y, x + dayWidth, y + dayHeight);
 
     if (d.getAttr('test')) {
-      int r = 2;
+      int r = 3;
       int gap = 1;
       fill(foregroundColor);
       ellipse(x + dayWidth - (r + gap), y + dayHeight - (r + gap), r, r);
@@ -205,10 +218,25 @@ SemesterCalendar {
 
   SemesterCalendar(SemesterDate schedule[]) {
 
-    // Create a new semester calendar starting and ending on the given days.
+    // Create a new semester calendar containing the given dates.  The earliest
+    // date given is taken to be the semester start; the latest date given is
+    // taken to be the semester end.
 
-    fDay = schedule[0];
-    lDay = schedule[schedule.length - 1];
+    if (schedule.length < 1)
+      throw "semesterCalendar() expecting at least one date, none given";
+
+    int mn = 0;
+    int mx = 0;
+    int i;
+
+    for (i = schedule.length - 1; i > 0; --i)
+      if (schedule[i].before(schedule[mn]))
+	mn = i;
+      else if (schedule[mx].before(schedule[i]))
+	mx = i;
+
+    fDay = schedule[mn];
+    lDay = schedule[mx];
     }
 
 
