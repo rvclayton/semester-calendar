@@ -1,13 +1,26 @@
 int backgroundColor = 255;
 int foregroundColor = 0;
+int faintForegroundColor = 192;
+
+
 int height = document.getElementById('sc-canvas').getAttribute('height');
 int width = document.getElementById('sc-canvas').getAttribute('width');
+if (!height || !width)
+  throw "canvas height or width not defined";
+
 int outerGap = 3;
 int topMargin = 15;
 int leftMargin = 15;
 boolean doDraw = true;
 
 	
+// Today's date shouldn't be cached, so call SemesterDate() directly.
+
+date nowDate = new Date();
+SemesterDate today = 
+  new SemesterDate( nowDate.getMonth() + 1, nowDate.getDate());
+
+
 // Semester dates are (should be) singletons.  Use a hash map to make sure
 // that's true.  The key for date mm, dd is 100*mm + dd
 
@@ -168,33 +181,37 @@ SemesterCalendar {
     y = topMargin + dayHeight*d.dayInWeek();
     x = leftMargin + dayWidth*weekInSemester(d);
 
-    color c = d.getAttr('color');
-    if (c !== null) {
-      fill(c);
-      noStroke();
-      rect(x, y, dayWidth, dayHeight);
+    stroke(faintForegroundColor);
+
+    if (!d.before(today)) {
+      color c = d.getAttr('color');
+      if (c !== null) {
+	fill(c);
+	noStroke();
+	rect(x, y, dayWidth, dayHeight);
+	}
+
       stroke(foregroundColor);
+      fill(foregroundColor);
+
+      if (d.getAttr('test')) {
+	int r = 3;
+	int gap = 1;
+	ellipse(x + dayWidth - (r + gap), y + dayHeight - (r + gap), r, r);
+	}
+
+      textAlign(LEFT);
+      textSize((int) (dayHeight*0.3));
+      text(d.dayInMonth(), x + dayWidth*0.05, y + dayHeight*0.3);
       }
-        
-    line(x, y, x + dayWidth, y);
-    line(x, y, x, y + dayHeight);
 
     if ((6 == d.dayInWeek()) || d.sameDate(lDay))
       line(x, y + dayHeight, x + dayWidth, y + dayHeight);
     if (!d.nextWeek().before(lDay))
       line(x + dayWidth, y, x + dayWidth, y + dayHeight);
 
-    if (d.getAttr('test')) {
-      int r = 3;
-      int gap = 1;
-      fill(foregroundColor);
-      ellipse(x + dayWidth - (r + gap), y + dayHeight - (r + gap), r, r);
-      }
-
-    fill(foregroundColor);
-    textAlign(LEFT);
-    textSize((int) (dayHeight*0.3));
-    text(d.dayInMonth(), x + dayWidth*0.05, y + dayHeight*0.3);
+    line(x, y, x + dayWidth, y);
+    line(x, y, x, y + dayHeight);
     }
 
 
