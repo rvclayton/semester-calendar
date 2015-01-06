@@ -402,13 +402,13 @@ SemesterDate {
 
   SemesterDate(int m, int d) {
 
-    // Create a new date with the given month (January = 1) and date (first
-    // date is 1).
+    // Create a new date with the given month (January = 1) and day (first day
+    // is 1).
 
-    // The assumption is semesters don't straddle years, so it doesn't make
-    // much difference what year it is.  (Ah, but there's leap years.)
+    // The assumption is semesters don't straddle years, so there's only one
+    // year, and it's this year.
 
-    date = new XDate(2014, m - 1, d);
+    date = new XDate((new Date()).getFullYear(), m - 1, d);
     attributes = new HashMap();
     }
 
